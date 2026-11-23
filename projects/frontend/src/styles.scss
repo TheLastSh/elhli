@@ -1,11 +1,16 @@
-@import "bootstrap/scss/bootstrap";
-@import "bootstrap-icons/font/bootstrap-icons";
+@use "bootstrap/scss/bootstrap" with (
+  $primary: #1D4ED8,
+  $indigo: #1E40AF
+);
+@use "bootstrap-icons/font/bootstrap-icons";
 
 /* Guía de estilo — context/system_context.md §5 */
-$primary: #1D4ED8;
-$indigo: #1E40AF;
+body {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
 
-$body-bg: #F8FAFC;
-$body-color: #0F172A;
-
-.alert-primary-custom { background-color: #3B82F6; color: white; }
+.alert-primary-custom {
+  background-color: #3B82F6;
+  color: white;
+}

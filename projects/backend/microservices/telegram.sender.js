@@ -11,7 +11,7 @@ export const registerChat = (chatId) => {
 export const sendAlert = async (text) => {
   for (const chatId of chats) {
     try {
-      const res = await fetch(`${API}/sendMessage?chatId=${encodeURIComponent(chatId)}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
+      const res = await fetch(`${API}/sendMessage?chat_id=${encodeURIComponent(chatId)}&text=${encodeURIComponent(text)}&parse_mode=Markdown`);
       if (!res.ok) console.log('[TELEGRAM] Estado:', res.status);
     } catch (err) {
       console.error('[TELEGRAM] Error envío alerta:', err.message);

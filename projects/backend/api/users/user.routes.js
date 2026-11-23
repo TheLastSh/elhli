@@ -8,8 +8,19 @@ import * as controller from './user.controller.js';
 
 const router = Router();
 
+// Login: email o CI (formato V-XXXXXXXX / E-XXXXXXXX según Validations_Security_Skill.md)
+// Formato de email básico + CI V/E (según Validations_Security_Skill.md)
+const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CI_FORMAT = /^[VE]-\d{8}$/i;
+
 const loginRules = [
-  check('email').notEmpty().isEmail().withMessage('Formato de email inválido'),
+  check('email')
+    .notEmpty()
+    .withMessage('Ingresa tu email o CI')
+    .custom((value) => {
+      const v = String(value).trim();
+      return EMAIL_FORMAT.test(v) || CI_FORMAT.test(v.toUpperCase());
+    }),
   check('password').notEmpty().withMessage('La contraseña es obligatoria')
 ];
 

@@ -4,14 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { GradesService, Grade } from '../../services/grades.service';
 import { StudentsService, Student } from '../../services/students.service';
 import { AttendanceService, Attendance, AttendanceStats } from '../../services/attendance.service';
-import { BadgeStatus } from '../shared/badge-status';
 import { ToastService } from '../../shared/toast.service';
 import { initializeSocket } from '../shared/socket';
 
 @Component({
   standalone: true,
   selector: 'app-dash-docente',
-  imports: [CommonModule, FormsModule, BadgeStatus],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="container-fluid p-4">
       <h1 class="mb-4">EduCoro AI - Portal Docente</h1>

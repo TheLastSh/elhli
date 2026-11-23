@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { StudentsService, Student } from '../../services/students.service';
 import { ToastService } from '../../shared/toast.service';
 import { BadgeStatus } from '../shared/badge-status';
@@ -8,12 +9,12 @@ import { BadgeStatus } from '../shared/badge-status';
 @Component({
   standalone: true,
   selector: 'app-coordinacion',
-  imports: [CommonModule, FormsModule, BadgeStatus],
+  imports: [CommonModule, FormsModule, BadgeStatus, RouterLink],
   template: `
     <div class="container p-4">
       <h1 class="mb-4">EduCoro AI - Coordinacion</h1>
 
-      <h4>Estudiantes</h4>
+      <h4 class="d-flex align-items-center gap-3">Estudiantes <a class="btn btn-outline-secondary" routerLink="/system">📊 Visualizar sistema</a></h4>
       <div class="d-flex gap-2 align-items-center mb-3">
         <input class="form-control w-25" placeholder="CI" [(ngModel)]="nuevo.ci" name="ci" />
         <input class="form-control w-25" placeholder="Nombre completo" [(ngModel)]="nuevo.fullName" name="fullName" />

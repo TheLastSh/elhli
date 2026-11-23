@@ -59,3 +59,20 @@ Historial de decisiones de diseño.
 - **Verificación del servidor:** `/api/health` responde; `/api/nope` → 404 JSON legible; `/` sirve `public/index.html`; `npm run dev` arranca sin errores.
 - **Archivado:** `backup.doc` y `estructura-carpetas.txt` archivados en `docs/archivados/` (Fase 0.13).
 - **MongoDB disponible localmente:** puerto 27017 en LISTEN, `mongod` corriendo (PID 13216). Disponible aunque Docker (Fase 0.10) sea el estándar seguro.
+
+## 26-11-23 — Saneamiento backend y panel de observabilidad (Fase A)
+
+- **Dev watch:** `npm run dev` = `nodemon --ignore node_modules --ignore public --ignore logs --ignore uploads` (nueva devDep). Verificado: 0 restarts espurios. Node 26 `--watch` reestaba mounts de `node_modules` (ej. `express`, `mimeScore.js`).
+- **Tests:** `npm test` = `node --test --test-timeout=30000 tests/*.test.js`. Test debug residual `tests/debug-attendance.test.js`: no existe en disco ni en `git ls-files` (124 archivos, status limpio). Resultado: 11/11 pass.
+- **Login email-o-CI:** validación local de email (regex básico) + CI `V-XXXXXXXX/E-XXXXXXXX` (skill Validations_Security_Skill); el controller ya admite `findUserByLogin` (email → CI). Nota: `express-validator@7` no exporta `isEmail` desde 'express-validator'.
+- **Telegram:** `fetch` global (quito `node:fetch` inválido); parámetros `chat_id`/`allowed_updates` (los correctos de la API de Telegram); cableado en `listen()` si `TELEGRAM_BOT_TOKEN`. `.env.example` añade `TELEGRAM_BOT_TOKEN`.
+- **server.js listen:** async; `await this.database()`; `database()` idempotente (`this._dbPromise`). Log esperado: `MongoDB conectado` → `Servedor ejecutándose en el puerto 3500` → `MongoDB: conectada`. Verificado.
+- **Endpoint observabilidad:** `GET /api/system/overview` (Coordinador): api (nodeVersion, env, uptimeSeconds), db (state, collections), realtime (socketsConnected), metrics (totalStudents, activeStudents, totalCourses, averageFinalGrade, attendancePct, alertsLast24h, alertsTotal), recentAlerts (10 últimas). `io.sockets.size` no existe en Socket.IO 4 — el recuento real es `io.sockets.sockets.size`.
+- **Frontend observabilidad:** ruta `/system` (guard Coordinador), tarjetas API/DB/Socket.IO/KPIs, lista de alertas recientes, actualización en vivo por Socket.IO (`alert_created`, `attendance_registered`, `grades_updated`, `student_updated`). Enlace desde la página Coordinación.
+- **Lazy-load:** rutas `dash/*` con `loadComponent` → initial JS 685→383 kB.
+- **Limpieza:** `BadgeStatus` quitado de DashDocente/DashEstudiante (no se usa en sus templates).
+- **Warnings pendientes (refactor futuro):** bundle initial 698 kB vs budget 500 kB — residuo mayormente CSS de Bootstrap (styles-ZHGZZ3LC.css 314 kB); posible optimización con Bootstrap subset o styles HTML custom.
+
+## 26-11-23 — Verificación de Fase A (procesos)
+- Smoke: `GET /api/health` → 200 `{"ok":true,...,"db":"connected"}`; `GET /` → 200; `GET /api/nope` → 404 JSON; `GET /api/system/overview` → 401 (autenticación).
+- Procesos Node cerrados; `mongod` (PID 13216) mantenido.

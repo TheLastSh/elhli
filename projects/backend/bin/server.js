@@ -10,12 +10,14 @@ import fileUpload from 'express-fileupload';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import connectDB from '../databases/connection.js';
+import { startTelegramConnector } from '../microservices/telegram.connector.js';
 import healthRouter from '../api/health/health.routes.js';
 import studentsRouter from '../api/students/student.routes.js';
 import coursesRouter from '../api/courses/course.routes.js';
 import gradesRouter from '../api/grades/grade.routes.js';
 import attendanceRouter from '../api/attendance/attendance.routes.js';
 import usersRouter from '../api/users/user.routes.js';
+import systemRouter from '../api/system/system.routes.js';
 import reportsRouter from '../api/reports/reportcard.routes.js';
 import { notFound, errorHandler } from '../middlewares/error.middleware.js';
 
@@ -42,13 +44,15 @@ class WebServer {
     this.errorHandlers();
   }
 
-  async database() {
-    try {
-      await connectDB();
-    } catch (err) {
-      console.error('[FATAL] No se pudo conectar a MongoDB:', err.message);
-      if (process.env.NODE_ENV === 'production') process.exit(1);
+  database() {
+    // Idempotente: una sola conexión sin importar cuántas veces se llame
+    if (!this._dbPromise) {
+      this._dbPromise = connectDB().catch((err) => {
+        console.error('[FATAL] No se pudo conectar a MongoDB:', err.message);
+        if (process.env.NODE_ENV === 'production') process.exit(1);
+      });
     }
+    return this._dbPromise;
   }
 
   middlewares() {
@@ -69,6 +73,7 @@ class WebServer {
     this.app.use('/api/grades', gradesRouter);
     this.app.use('/api/attendance', attendanceRouter);
     this.app.use('/api/users', usersRouter);
+    this.app.use('/api/system', systemRouter);
     this.app.use('/api/reports', reportsRouter);
     // Registro dinámico de enrutadores del proyecto (Fase 2: students, courses, grades, attendance, auth, reports)
   }
@@ -93,8 +98,12 @@ class WebServer {
     this.app.use(notFound, errorHandler);
   }
 
-  listen() {
+  async listen() {
     const port = process.env.PORT || 3500;
+    await this.database();
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      startTelegramConnector().catch((err) => console.error('[TELEGRAM] No se pudo iniciar el conector:', err.message));
+    }
     this.server.listen(port, () => {
       const dbState = mongoose.connection.readyState === 1 ? 'conectada' : 'desconectada';
       console.log(`Servidor ejecutándose en el puerto ${port}`);

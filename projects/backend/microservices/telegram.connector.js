@@ -1,6 +1,6 @@
 // microservices/telegram.connector.js — Bot de Telegram para Consultas de EduCoro AI
 // Usa fetch nativo (sin dependencias extra). Token: TELEGRAM_BOT_TOKEN en .env
-import fetch from 'node:fetch';
+// Usa fetch global de Node.js (sin import). Token: TELEGRAM_BOT_TOKEN en .env
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API = `https://api.telegram.org/bot${TOKEN}`;
@@ -14,7 +14,7 @@ const api = async (path, params) => {
   return res.json();
 };
 
-const sendMessage = (chatId, text) => api('sendMessage', { chatId, text, parse_mode: 'Markdown' });
+const sendMessage = (chatId, text) => api('sendMessage', { chat_id: chatId, text, parse_mode: 'Markdown' });
 
 const loginUser = async (emailOrCi) => {
   const res = await fetch('http://localhost:3500/api/users/login', {
@@ -104,7 +104,7 @@ export const startTelegramConnector = async () => {
   let offset = 0;
   const poll = async () => {
     try {
-      const res = await api('getUpdates', { offset, timeout: '10', allowedUpdates: 'message' });
+      const res = await api('getUpdates', { offset, timeout: '10', allowed_updates: 'message' });
       if (res.result?.length) {
         for (const u of res.result) {
           offset = u.update_id + 1;

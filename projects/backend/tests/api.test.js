@@ -160,3 +160,22 @@ test('auth: login adaptativo por email y registro de refresh/logout/me', async (
   assert.strictEqual(logout.status, 200);
   assert.strictEqual(logout.body.ok, true);
 });
+
+test('sistema: GET /api/system/overview (autenticado, Coordinador)', async () => {
+  const res = await authed.get('/api/system/overview');
+  assert.strictEqual(res.status, 200, JSON.stringify(res.body));
+  assert.strictEqual(res.body.ok, true);
+  assert.ok(res.body.timestamp);
+  assert.ok(['conectada', 'desconectada'].includes(res.body.db.state));
+  assert.ok(typeof res.body.api.uptimeSeconds === 'number');
+  assert.ok(typeof res.body.realtime.socketsConnected === 'number');
+  assert.strictEqual(typeof res.body.metrics.totalStudents, 'number');
+  assert.ok(res.body.metrics.averageFinalGrade === null || typeof res.body.metrics.averageFinalGrade === 'number');
+  assert.ok(Array.isArray(res.body.recentAlerts));
+});
+
+test('sistema: GET /api/system/overview requiere autenticación', async () => {
+  const res = await request(app).get('/api/system/overview');
+  assert.strictEqual(res.status, 401);
+  assert.strictEqual(res.body.ok, false);
+});

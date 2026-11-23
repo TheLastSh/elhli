@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { GradesService, GradeInfo } from '../../services/grades.service';
 import { AttendanceService, AttendanceStats } from '../../services/attendance.service';
 import { ReportsService } from '../../services/reports.service';
-import { BadgeStatus } from '../shared/badge-status';
 import { AuthService } from '../../auth/auth.service';
 
 @Component({
   standalone: true,
   selector: 'app-dash-estudiante',
-  imports: [CommonModule, BadgeStatus],
+  imports: [CommonModule],
   template: `
     <div class="container p-4">
       <h1 class="mb-3">Mi EduCoro</h1>
