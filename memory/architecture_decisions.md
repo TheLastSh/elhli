@@ -34,6 +34,17 @@ Historial de decisiones de diseño.
 - **Validación:** CI V/E único; reglas de negocio reflejadas en UI (estado badge, alertas de riesgo/attendance).
 - **Validación:** build ✅ (685 kB, puede tener advertencia de bundle >500kB). Estáticos verificados: `GET /` → 200, `GET /main-*.js` → 200.
 
+## 26-11-23 — Repositorio y publicación en GitHub (Fase 7)
+
+- **Repo:** creado en raíz `C:\Users\Eduardo Rojas\Documents\EducoroIA\EduCoro AI\EduCoro AI`, nombre de autor `Eduardo Rojas <tlshinobidevelop@gmail.com>` (en consola, por usuario de WINDOWS).
+- **Primer commit:** `24fb7db` — "chore: inicialización del repositorio EduCoro AI" (todos los archivos: backend, frontend, mobile, context, memory, skills).
+- **gh CLI:** instalado v2.105.0 via winget (`winget install --id GitHub.cli`); binario en `C:\Program Files\GitHub CLI\gh.exe`. **Pendiente:** autenticación del usuario (vinculado a su cuenta de GitHub; falta confirmación del email: `gh auth status`).
+- **Próximos pasos para el usuario:**
+  1. `C:\Program Files\GitHub CLI\gh.exe auth status` → debe mostrar cuenta con su email.
+  2. Si no: ejecutar `C:\Program Files\GitHub CLI\gh.exe auth login --hostname github.com --web --scopes repo,workflow`, abrir la URL, ingresar el código que pedirá (si se pierde, borrar la app y volver a intentar).
+  3. `gh repo create elhli --public --source=. --remote=origin --push` (desde raíz).
+  4. Verificar: `gh repo view` → `https://github.com/tlshinobidevelop/elhli`.
+
 ## 26-11-23 — Saneamiento de infraestructura (Fase 0)
 
 - **MongoDB:** En Docker: contenedor `mongo:8`, `-p 27017:27017`, volumen `educoro_ai_mongo_data` (docker-compose.yml en `projects/backend/`). Mongoose 9 compatible con el imagen.
