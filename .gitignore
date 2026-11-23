@@ -1,0 +1,19 @@
+# secretos y entorno
+.env
+
+# dependencias y builds
+node_modules/
+dist/
+.angular/
+*.log
+
+# artefactos móvil
+*.apk
+
+# runtime
+logs/
+projects/backend/uploads/images/
+projects/backend/uploads/documents/
+
+# artefactos generados por la app
+projects/backend/uploads/apks/*.apk

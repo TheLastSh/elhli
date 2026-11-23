@@ -1,0 +1,15 @@
+# EduCoro AI — contenedores de bases de datos (Windows/WSL 2 compatible)
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: educoro-ai-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - educoro_ai_mongo_data:/data/db
+
+volumes:
+  educoro_ai_mongo_data:

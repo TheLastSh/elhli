@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EduCoro AI</string>
+    <string name="backend_url">http://10.0.2.2:3500</string>
+    <string name="api_base_url">http://10.0.2.2:3500</string>
+</resources>
