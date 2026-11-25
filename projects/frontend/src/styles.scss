@@ -4,13 +4,104 @@
 );
 @use "bootstrap-icons/font/bootstrap-icons";
 
-/* Guía de estilo — context/system_context.md §5 */
-body {
-  background-color: #F8FAFC;
-  color: #0F172A;
+/* ------------------------------------------------------------------
+ * Identidad visual — context/system_context.md §5 + Plan Glassmorphism
+ * ------------------------------------------------------------------ */
+:root {
+  /* Paleta institucional (card: context §5) */
+  --edu-primary: #1E3A8A;        /* Azul Universitario */
+  --edu-primary-solid: #1D4ED8;  /* Azul Real: botones primarios */
+  --edu-indigo: #1E40AF;         /*Índigo: headers de tablas y cards */
+  --edu-accent: #3B82F6;         /* Azul Claro Interactivo */
+  --edu-alert: #D97706;          /* Ámbar: alertas */
+
+  /* Fondos neutros */
+  --edu-bg: #F8FAFC;
+  --edu-dark: #0F172A;
+  --edu-text: #0F172A;
+  --edu-muted: #64748B;
+
+  /* Glassmorphism (paleta suave y separación nítida) */
+  --glass-bg: rgba(255, 255, 255, 0.30);
+  --glass-bg-2: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
+  --glass-radius: 16px;
 }
 
-.alert-primary-custom {
-  background-color: #3B82F6;
-  color: white;
+body {
+  background:
+    radial-gradient(1200px circle at 10% 10%, rgba(29, 78, 216, 0.10), transparent 60%),
+    radial-gradient(900px circle at 90% 15%, rgba(30, 64, 175, 0.12), transparent 55%),
+    var(--edu-bg);
+  color: var(--edu-text);
 }
+
+/* Utilidades glass (card, panel, modal) */
+.w-glass,
+.w-glass-2 {
+  position: relative;
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+}
+.w-glass-2 { background: var(--glass-bg-2); }
+
+.w-glass::before,
+.w-glass-2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius);
+  padding: 1px;
+  background: linear-gradient(110deg, rgba(255,255,255,0.85), rgba(255,255,255,0.05), rgba(255,255,255,0.85));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Adapters del sistema existente a glass */
+.bg-primary-custom { background-color: var(--edu-primary-solid) !important; }
+.bg-indigo { background-color: var(--edu-indigo) !important; }
+.table-indigo thead th { background-color: var(--edu-indigo) !important; color: #fff !important; }
+
+/* Badges de riesgo/reprobado con estilo glass */
+.badge-ok { background: #16A34A !important; color: #fff !important; }
+.badge-risk { background: var(--edu-alert) !important; color: #fff !important; }
+.badge-reprobado { background: #DC2626 !important; color: #fff !important; }
+
+/* Navbar glass (app.ts) */
+.header {
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #1E3A8A 0%, #1D4ED8 100%);
+}
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255,255,255,0.5);
+}
+.nav-item.active { background: rgba(255,255,255,0.5); color: #1D4ED8 !important; font-weight: 600; }
+.bi { font-size: 1em; }
+
+/* Tarjetas glass en rutas (plantillas largas) */
+.w-glass-card { border-radius: var(--glass-radius); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.30); backdrop-filter: blur(18px) saturate(1.4); }
+
+/* Tablas glass */
+.w-glass-table { border-radius: 10px; overflow: hidden; }

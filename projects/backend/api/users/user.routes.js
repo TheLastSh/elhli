@@ -37,5 +37,10 @@ const userRules = [
 ];
 
 router.post('/', authenticate, permit('Coordinador'), userRules, controller.create);
+router.get('/', authenticate, permit('Coordinador'), controller.list);
+router.get('/:id', authenticate, permit('Coordinador'), controller.getOne);
+router.put('/:id', authenticate, permit('Coordinador'), userRules, controller.update);
+router.put('/:id/password', authenticate, permit('Coordinador'), controller.changePassword);
+router.delete('/:id', authenticate, permit('Coordinador'), controller.del);
 
 export default router;

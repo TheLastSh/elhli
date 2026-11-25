@@ -1,10 +1,7 @@
 import mongoose from 'mongoose';
 
-// Calculadora pura de la ponderación (Business_Rules.md §1: 30% - 35% - 35%)
-export const calculateFinalGrade = (cut1, cut2, cut3) => {
-  if (typeof cut1 !== 'number' || typeof cut2 !== 'number' || typeof cut3 !== 'number') return null;
-  return cut1 * 0.30 + cut2 * 0.35 + cut3 * 0.35;
-};
+import { calculateFinalGrade } from '../../helpers/businessRules.js';
+export { calculateFinalGrade };
 
 const gradeSchema = new mongoose.Schema({
   studentId: {
@@ -35,7 +32,7 @@ const gradeSchema = new mongoose.Schema({
     type: Number,
     min: 0,
     max: 20,
-    default: 0
+    default: null
   }
 }, { timestamps: true });
 

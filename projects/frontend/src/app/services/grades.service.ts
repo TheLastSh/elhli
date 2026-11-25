@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { firstValueFrom, map } from 'rxjs';
 
-export interface Grade { _id: string; studentId: string; subject: string; cut1?: number; cut2?: number; cut3?: number; finalGrade: number; createdAt: string }
+export interface Grade { _id: string; studentId: string; subject: string; cut1?: number; cut2?: number; cut3?: number; finalGrade?: number | null; createdAt: string; student?: any }
 export interface GradeInfo { studentId: string; fullName: string; section: string; totalCalificaciones: number; promedioGeneral: number; status: string; enRiesgo: boolean }
 
 @Injectable({ providedIn: 'root' })

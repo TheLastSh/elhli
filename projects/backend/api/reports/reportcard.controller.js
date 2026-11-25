@@ -1,6 +1,8 @@
 import { AppError } from '../../helpers/appError.js';
 import { asyncHandler } from '../../helpers/asyncHandler.js';
+import { buildAttendanceAlerts } from '../../helpers/businessRules.js';
 import { buildBoletinPDF } from '../../helpers/pdf-reportcard.js';
+import { buildConstanciaPDF } from '../../helpers/pdf-constancia.js';
 import Student from '../students/student.model.js';
 import Grade from '../grades/grade.model.js';
 import Attendance from '../attendance/attendance.model.js';
@@ -13,6 +15,15 @@ export const boletin = asyncHandler(async (req, res) => {
   const pdf = await buildBoletinPDF(student._id);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="boletin-${sanitizeName(student.fullName)}-${student.ci.replace(/\W/g, '')}.pdf"`);
+  res.send(pdf);
+});
+
+export const constancia = asyncHandler(async (req, res) => {
+  const student = await Student.findById(req.params.id);
+  if (!student) throw new AppError('Estudiante no encontrado', 404, 'NOT_FOUND', 'No existe un estudiante con ese id');
+  const pdf = await buildConstanciaPDF(student._id);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="constancia-${student.fullName.replace(/\s+/g, '_')}-${student.ci}.pdf"`);
   res.send(pdf);
 });
 
@@ -34,9 +45,6 @@ export const estadisticas = asyncHandler(async (req, res) => {
     promedioGeneral: promedio,
     porcentajeInasistencias,
     attendance: { total, presentes, ausentes, justificados },
-    alerts: [
-      ...(porcentajeInasistencias > 25 ? [{ type: 'reprobado_por_inasistencia', porcentaje: porcentajeInasistencias }] : []),
-      ...(porcentajeInasistencias > 20 ? [{ type: 'alerta_preventiva_inasistencia', porcentaje: porcentajeInasistencias }] : [])
-    ]
+    alerts: buildAttendanceAlerts(porcentajeInasistencias).alerts.map((a) => ({ type: a.type, porcentaje: a.porcentaje }))
   });
 });

@@ -3,6 +3,7 @@ import http from 'http';
 import os from 'os';
 import mongoose from 'mongoose';
 import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -31,6 +32,18 @@ class WebServer {
     this.io = new SocketIOServer(this.server, {
       cors: { origin: true, credentials: true },
       path: '/socket.io'
+    });
+
+    // Sockets asociados a la sesión del usuario (handshake auth / ?token=)
+    this.io.use((socket, next) => {
+      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (!token) return next(new Error('Token requerido'));
+      try {
+        socket.user = jwt.verify(token, process.env.JWT_SECRET || 'educoro-secret');
+        return next();
+      } catch {
+        return next(new Error('Token inválido o expirado'));
+      }
     });
 
     this.app.set('io', this.io);

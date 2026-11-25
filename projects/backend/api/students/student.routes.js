@@ -30,6 +30,7 @@ router.post('/', validateRules(studentCreateRules), authenticate, permit('Docent
 router.get('/', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.list);
 router.get('/:id', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.getOne);
 router.put('/:id', validateRules(studentUpdateRules), authenticate, permit('Docente', 'Coordinador'), controller.update);
+router.put('/:id/status', [check('status').isIn(['Activo', 'Retirado']).withMessage('Estado inválido')], authenticate, permit('Coordinador', 'Admin'), controller.setStatus);
 router.delete('/:id', authenticate, permit('Docente', 'Coordinador'), controller.deleteOne);
 
 export default router;

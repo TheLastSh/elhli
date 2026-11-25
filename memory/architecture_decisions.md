@@ -76,3 +76,31 @@ Historial de decisiones de diseño.
 ## 26-11-23 — Verificación de Fase A (procesos)
 - Smoke: `GET /api/health` → 200 `{"ok":true,...,"db":"connected"}`; `GET /` → 200; `GET /api/nope` → 404 JSON; `GET /api/system/overview` → 401 (autenticación).
 - Procesos Node cerrados; `mongod` (PID 13216) mantenido.
+
+## 26-11-25 — Glassmorphism en frontend + comps de estilo (paso 5 de Plan Glassmorphism)
+
+- **Tokens** (`styles.scss`): paleta neutra + glass: `--edu-primary #1E3A8A`, `--edu-primary-solid #1D4ED8`, `--edu-indigo #1E40AF`, `--edu-accent #3B82F6`, `--edu-alert #D97706`, fondos `#F8FAFC/#0F172A`, bg glass `rgba(255,255,255,0.30/0.45)`, border `rgba(255,255,255,0.55)`, blur `16px` saturate 1.5; body con gradientes radiosos de fondo.
+- **Utilidades glass:** `.w-glass` (blur + border + sombra suave), `.w-glass-2`, pseudo-elements con gradientes de bordes (mask xor), `.w-glass-card`, `.w-glass-table`.
+- **Recubrimiento visual:** `app.ts` navbar (glass, gradiente 1E3A8A→1D4ED8, items con hover blur), `login.ts` (card `w-glass-card shadow-none`), `system-overview.ts` (5 tarjetas `w-glass-card`), `dash-docente.ts`, `dash-estudiante.ts`, `coordinacion.ts` (tablas glass, modal glass), badges de estado custom (`badge-ok/#16A34A`, `badge-risk/#D97706`, `badge-reprobado/#DC2626`).
+- **Nuevo componente:** `w-job-tracking-indicator` — glass card con estados: spinner (esperando), badge pulse + árbol glass (en curso), badge done + pulse+animación jobPulse (concluido), botones Iniciar/Finalizar; estilo local.
+- **Validación:** `ng build` OK; estáticos copiados; browser integrado: login card glass, `/system` 5 tarjetas `w-glass-card` (glassCards: 5), header con active nav.
+
+## 26-11-24 — Pulido de reglas de negocio y observabilidad frontend (Fases 0–3)
+
+- **BusinessRules.js** (`projects/backend/helpers/businessRules.js`): fuente única de verdad — `PASS_GRADE=10` (§2), `ATTENDANCE_PREVENTIVE=20`, `ATTENDANCE_REPROBA=25` (§3), `calculateFinalGrade` (30/35/35), `computeStudentAverage`, `validateCuts`, `checkFinalGradeFormula` (tolerancia 0.01), `evaluateStudentStatus` (En Riesgo recuperable, Reprobado sticky, Retirado terminal), `buildAcademicAlert`, `buildAttendanceAlerts`, `saveAlertIfNew` (dedupe por tipo+día).
+- **Reglas polidas (backend):** `grade.controller.js` usa `checkRisk(studentId)`; persiste alertas en `Alert`; emite `student_updated`. `attendance.controller.js`: alertas preventivas/reprobación persistidas; duplicado QR → 409 `ALREADY_REGISTERED`; `scan` valida QR vacío. `grade.routes.js`: validación 0–20 de cortes + fórmula `finalGrade`. `reportcard.controller.js`: alertas con mensajes.
+- **Socket:** `bin/server.js` añade `io.use(socket.handshake.auth?.token)`; `user.model.js` añade `'Admin'`; frontend `socket.ts` pasa token en el handshake.
+- **Frontend:** interceptor con cola única de refresh 401 y toasts con `message`/`suggestion`; guard redirige a `/login` sin token; navbar por rol (Docente/Mi record/Visualizar sistema/Salir) con iconos Bootstrap; identidad visual (`#1E3A8A`, `#1D4ED8`, `#1E40AF`, `#3B82F6`, `#D97706`) en `styles.scss`; dashboards con estados loading/error/vacío; PDF del boletín autenticado vía ApiService blob; `coordinacion` con validación V/E.
+- **Validación:** `npm test --prefix projects\backend` → 16/16 pass; frontend `ng build` OK; estáticos copiados a `projects/backend/public/`; servidor corriendo en :3500.
+
+## 26-11-25 — Navegación por rol y JWT (Fases 1–3)
+
+- **Navbar completo y reactivo:** `app.ts` muestra `Coordinación`, `Usuarios`, `Docente` y `Visualizar sistema` para Coordinador/Admin; `Docente` para Docente; `Mi récord` para Estudiante; brand vinculado a home y badge de usuario.
+- **Auth Service reactivo:** `user`/`role` como signals; `login`, `me`, `refresh` y `logout` actualizan estado. `homeRouteFor()` centraliza `Docente→/dash/docente`, `Estudiante→/dash/estudiante`, `Coordinador/Admin→/dash/coordinacion`.
+- **Guard:** redirige autenticados sin permiso a su vista principal con toast (no a `/login`).
+- **Read-only Docente:** `/dash/docente` permite `Docente`, `Coordinador`, `Admin`; `data.writeRoles=['Docente']`; readOnly muestra banner, sin inputs ni Guardar.
+- **JWT:** tokens con `jti`, `studentId`, `tokenVersion`; refresh hasheado con bcrypt en `User.refreshTokenHash`; logout invalida `tokenVersion`; 401 reintenta tras refresh (single flight, excluye `/users/refresh`).
+- **Users UI:** pestaña `/dash/usuarios` (CRUD, contraseñas, eliminar).
+- **Course scoping:** Docente solo ve/opera cursos/estudiantes de cursos; scope en grades/attendance/students.
+- **Migraciones:** `scripts/migrate-final-null.js`, `scripts/backfill-qr.js`.
+- **Validación:** `npm test` → 16/16; `npm run build --prefix projects\frontend` OK; `Start-Process node projects\backend\index.js` detached.

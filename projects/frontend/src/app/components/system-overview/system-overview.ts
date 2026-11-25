@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../auth/auth.service';
 import { initializeSocket } from '../shared/socket';
 
 export interface SystemAlert {
@@ -34,11 +36,16 @@ export interface SystemOverview {
 @Component({
   standalone: true,
   selector: 'app-system-overview',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="container p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Visualizar sistema — EduCoro AI</h1>
+        <div class="d-flex gap-2 align-items-center">
+          <a class="btn btn-outline-secondary" *ngIf="auth.isCoordinador()" [routerLink]="['/dash/coordinacion']">
+            <i class="bi bi-arrow-left-circle"></i> Volver a Coordinación
+          </a>
+          <h1>Visualizar sistema — EduCoro AI</h1>
+        </div>
         <button class="btn btn-outline-primary" (click)="refresh()">Recargar</button>
       </div>
 
@@ -55,7 +62,7 @@ export interface SystemOverview {
         <div class="row g-3 mb-4">
           <!-- Tarjeta API -->
           <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100">
+            <div class="card w-glass-card h-100">
               <div class="card-header bg-primary-custom text-white py-2">🖥️ API</div>
               <div class="card-body">
                 <div class="d-flex justify-content-between mb-1"><span>Node.js</span><span><span class="badge bg-dark text-white">{{ s.api.nodeVersion }}</span></span></div>
@@ -68,7 +75,7 @@ export interface SystemOverview {
 
           <!-- Tarjeta MongoDB -->
           <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100">
+            <div class="card w-glass-card h-100">
               <div class="card-header bg-primary-custom text-white py-2">🗃️ MongoDB</div>
               <div class="card-body">
                 <div class="d-flex justify-content-between mb-1">
@@ -82,7 +89,7 @@ export interface SystemOverview {
 
           <!-- Tarjeta Socket.IO -->
           <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100">
+            <div class="card w-glass-card h-100">
               <div class="card-header bg-primary-custom text-white py-2">🔌 Socket.IO</div>
               <div class="card-body">
                 <p class="mb-0"><strong>{{ s.realtime.socketsConnected }}</strong> conectados</p>
@@ -93,7 +100,7 @@ export interface SystemOverview {
 
           <!-- KPIs -->
           <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100">
+            <div class="card w-glass-card h-100">
               <div class="card-header bg-primary-custom text-white py-2">📊 KPIs</div>
               <div class="card-body">
                 <div class="d-flex justify-content-between mb-1">
@@ -115,7 +122,7 @@ export interface SystemOverview {
 
         <!-- Alertas recientes -->
         <h5 class="mb-3">Alertas recientes</h5>
-        <div class="card shadow-sm">
+        <div class="card w-glass-card">
           <ul class="list-group list-group-flush">
             @for (a of s.recentAlerts; track a._id) {
               <li class="list-group-item">
@@ -133,27 +140,37 @@ export interface SystemOverview {
     </div>
   `
 })
-export class SystemOverview implements OnInit {
+export class SystemOverview implements OnInit, OnDestroy {
   private apiSvc = inject(ApiService);
+  private auth = inject(AuthService);
   data = signal<SystemOverview | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   private socket = initializeSocket();
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private socketEvents = ['alert_created', 'attendance_registered', 'grades_updated', 'student_updated'];
 
   ngOnInit() {
     void this.refresh();
-    // Panel actualiza en tiempo real ante eventos de asistencia/notas/alertas
-    this.socket.on('alert_created', () => void this.refresh());
-    this.socket.on('attendance_registered', () => void this.refresh());
-    this.socket.on('grades_updated', () => void this.refresh());
-    this.socket.on('student_updated', () => void this.refresh());
+    // Panel actualiza en tiempo real ante eventos; debounce de 1.5s evita ráfagas de 4 peticiones
+    for (const ev of this.socketEvents) {
+      this.socket.on(ev, () => {
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => void this.refresh(), 1500);
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
   }
 
   async refresh() {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.data.set(await firstValueFrom(this.apiSvc.get<SystemOverview>('/system/overview')));
+      this.data.set(await firstValueFrom(this.apiSvc.get<SystemOverview>('/api/system/overview')));
     } catch {
       this.error.set('No se pudo obtener la visualización del sistema. Revisa que el servidor esté corriendo.');
     } finally {

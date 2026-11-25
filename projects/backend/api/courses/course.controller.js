@@ -2,6 +2,7 @@ import Course from './course.model.js';
 import Student from '../students/student.model.js';
 import { AppError } from '../../helpers/appError.js';
 import { asyncHandler } from '../../helpers/asyncHandler.js';
+import { getDocenteCourseIds } from '../../helpers/docenteScope.js';
 
 const toPublic = (c) => ({
   _id: c._id,
@@ -19,7 +20,11 @@ export const create = asyncHandler(async (req, res) => {
 
 export const list = asyncHandler(async (req, res) => {
   const { section } = req.query;
-  const query = section ? { section } : {};
+  let query = section ? { section } : {};
+  if (req.user?.role === 'Docente') {
+    const ids = await getDocenteCourseIds(req.user.id);
+    query = { ...query, _id: { $in: ids } };
+  }
   const data = await Course.find(query);
   res.json({ ok: true, data: data.map(toPublic) });
 });
@@ -27,6 +32,11 @@ export const list = asyncHandler(async (req, res) => {
 export const getOne = asyncHandler(async (req, res) => {
   const course = await Course.findById(req.params.id).populate('professorId', ['email', 'fullName']);
   if (!course) throw new AppError('Curso no encontrado', 404, 'NOT_FOUND', 'No existe un curso con ese id');
+  if (req.user?.role === 'Docente') {
+    const ids = await getDocenteCourseIds(req.user.id);
+    const inScope = ids.map((id) => id.toString()).includes(course._id.toString());
+    if (!inScope) throw new AppError('Acceso denegado: curso fuera de tu alcance', 403, 'FORBIDDEN', 'Solo puedes ver cursos donde eres el Profesor');
+  }
   res.json({ ok: true, course: { ...toPublic(course), professor: course.professorId } });
 });
 
@@ -46,4 +56,11 @@ export const addStudents = asyncHandler(async (req, res) => {
   course.students = [...current].map((id) => id);
   await course.save();
   res.json({ ok: true, course: toPublic(course) });
+});
+
+export const deleteOne = asyncHandler(async (req, res) => {
+  const course = await Course.findById(req.params.id);
+  if (!course) throw new AppError('Curso no encontrado', 404, 'NOT_FOUND', 'No existe un curso con ese id');
+  await course.deleteOne();
+  res.json({ ok: true, message: `Curso ${course.subject} eliminado` });
 });

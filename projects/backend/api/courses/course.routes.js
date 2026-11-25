@@ -12,10 +12,10 @@ const courseRules = [
   check('section').optional().isIn(['IA-1', 'IA-2', 'SIST-1']).withMessage('Sección debe ser IA-1, IA-2 o SIST-1')
 ];
 
-router.post('/', courseRules, authenticate, permit('Docente', 'Coordinador'), controller.create);
+router.post('/', courseRules, authenticate, permit('Docente', 'Coordinador', 'Admin'), controller.create);
 router.get('/', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.list);
-router.get('/:id', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.getOne);
-router.put('/:id', courseRules, authenticate, permit('Docente', 'Coordinador'), controller.update);
-router.put('/:id/students', [check('studentIds').isArray().notEmpty().withMessage('studentIds debe ser un arreglo no vacío')], authenticate, permit('Docente', 'Coordinador'), controller.addStudents);
+router.put('/:id', courseRules, authenticate, permit('Coordinador', 'Admin'), controller.update);
+router.put('/:id/students', [check('studentIds').isArray().notEmpty().withMessage('studentIds debe ser un arreglo no vacío')], authenticate, permit('Docente', 'Coordinador', 'Admin'), controller.addStudents);
+router.delete('/:id', authenticate, permit('Coordinador', 'Admin'), controller.deleteOne);
 
 export default router;

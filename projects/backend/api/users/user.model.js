@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Docente', 'Estudiante', 'Coordinador'],
+    enum: ['Docente', 'Estudiante', 'Coordinador', 'Admin'],
     default: 'Docente'
   },
   fullName: {
@@ -32,8 +32,9 @@ const userSchema = new mongoose.Schema({
     ref: 'Student',
     sparse: true
   },
-  refreshTokenHash: { type: String, select: false, sparse: true },
-  lastLoginAt: { type: Date, select: false }
+  refreshTokenHash: { type: String, sparse: true },
+  lastLoginAt: { type: Date, select: false },
+  tokenVersion: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

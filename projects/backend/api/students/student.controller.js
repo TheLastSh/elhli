@@ -1,6 +1,8 @@
 import Student from './student.model.js';
 import Grade from '../grades/grade.model.js';
 import Attendance from '../attendance/attendance.model.js';
+import { scopeStudents, isStudentInDocenteScope } from '../../helpers/docenteScope.js';
+import { writeAudit } from '../../helpers/audit.js';
 import { AppError } from '../../helpers/appError.js';
 import { asyncHandler } from '../../helpers/asyncHandler.js';
 
@@ -28,9 +30,10 @@ export const create = asyncHandler(async (req, res) => {
     fullName,
     email: email ? String(email).trim().toLowerCase() : email,
     section: section || 'IA-1',
-    status: status || 'Activo'
+    status: status || 'Activo',
+    qrCode: ci ? `QR-${String(ci).trim().toUpperCase()}` : undefined
   };
-  // Note: 'Reprobado' se permite en modelo y via colas de backend (Fase 2)
+  // Generamos QR automático si no se envió uno (§3). Si falla la duplicación, sigue sin QR.
   try {
     const student = await Student.create(normalized);
     res.status(201).json({ ok: true, student: normalize(student) });
@@ -45,11 +48,12 @@ export const create = asyncHandler(async (req, res) => {
 
 export const list = asyncHandler(async (req, res) => {
   const { section, status, q, page = 1, limit = 50 } = req.query;
-  const query = {};
+  const limitNum = Math.min(Number(limit) || 50, 200);
+  const query = await scopeStudents(req.user, {});
   if (section) query.section = section;
   if (status) query.status = status;
   if (q) query.$or = [{ fullName: { $regex: new RegExp(q, 'i') } }, { ci: { $regex: new RegExp(q, 'i') } }];
-  const data = await Student.find(query).sort({ fullName: 1 }).limit(Math.min(Number(limit) || 50, 200)).skip((Number(page) - 1) * 50);
+  const data = await Student.find(query).sort({ fullName: 1 }).limit(limitNum).skip((Number(page) - 1) * limitNum);
   const total = await Student.countDocuments(query);
   res.json({ ok: true, data: data.map(normalize), pagination: { page: Number(page), total } });
 });
@@ -57,14 +61,33 @@ export const list = asyncHandler(async (req, res) => {
 export const getOne = asyncHandler(async (req, res) => {
   const student = await Student.findById(req.params.id);
   if (!student) throw new AppError('Estudiante no encontrado', 404, 'NOT_FOUND', 'No existe un estudiante con ese id');
+  if (req.user?.role === 'Docente') {
+    const inScope = await isStudentInDocenteScope(req.user, student._id);
+    if (!inScope) throw new AppError('Acceso denegado: estudiante fuera de tu alcance', 403, 'FORBIDDEN', 'Solo puedes ver estudiantes de tus cursos');
+  }
   res.json({ ok: true, student: normalize(student) });
 });
 
 export const update = asyncHandler(async (req, res) => {
-  const student = await Student.findByIdAndUpdate(req.params.id, { $set: { ...req.body } }, { new: true, runValidators: true });
+  const { fullName, email, section } = req.body;
+  const student = await Student.findByIdAndUpdate(req.params.id, { $set: { fullName, email, section } }, { new: true, runValidators: true });
   if (!student) throw new AppError('Estudiante no encontrado', 404, 'NOT_FOUND', 'No existe un estudiante con ese id');
   emit(req, 'student_updated', { studentId: student._id.toString() });
   res.json({ ok: true, student: normalize(student) });
+});
+
+// Estado CANONICO: solo activo/retirado manuales; En Riesgo y Reprobado son derivados.
+export const setStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  if (!['Activo', 'Retirado'].includes(status)) {
+    throw new AppError('No se puede establecer el estado derivado desde el frontend', 400, 'FORBIDDEN_STATUS', 'Usa un coordinador para gestionar estados derivados');
+  }
+  const prev = await Student.findById(req.params.id).then((s) => s?.status);
+  const student = await Student.findByIdAndUpdate(req.params.id, { $set: { status } }, { new: true, runValidators: true });
+  if (!student) throw new AppError('Estudiante no encontrado', 404, 'NOT_FOUND', 'No existe un estudiante con ese id');
+  emit(req, 'student_updated', { studentId: student._id.toString(), status });
+  await writeAudit(req.user, 'setStatus', { id: student._id.toString(), from: prev, to: status });
+  res.json({ ok: true, status: student.status });
 });
 
 export const deleteOne = asyncHandler(async (req, res) => {

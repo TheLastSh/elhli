@@ -14,6 +14,7 @@ const attendanceRules = [
 
 router.post('/', attendanceRules, authenticate, permit('Docente', 'Coordinador'), controller.create);
 router.post('/scan', [check('qrCode').notEmpty().withMessage('qrCode es obligatorio')], authenticate, permit('Docente', 'Coordinador'), controller.scan);
+router.put('/:id', attendanceRules, authenticate, permit('Docente', 'Coordinador'), controller.update);
 router.get('/', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.list);
 router.get('/estudiante/:studentId/porcentaje', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.porcentaje);
 router.get('/:id', authenticate, permit('Docente', 'Coordinador', 'Estudiante'), controller.getOne);

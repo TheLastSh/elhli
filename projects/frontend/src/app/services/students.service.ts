@@ -20,4 +20,7 @@ export class StudentsService {
   update(id: string, s: Partial<Student>): Promise<Student> {
     return firstValueFrom(this.api.put<{ ok: boolean; student: Student }>(`/api/students/${id}`, s).pipe(map((r) => r.student)));
   }
+  setStatus(id: string, status: string): Promise<{ ok: boolean; status: string }> {
+    return firstValueFrom(this.api.put<{ ok: boolean; status: string }>(`/api/students/${id}/status`, { status }));
+  }
 }

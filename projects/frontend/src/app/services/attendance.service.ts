@@ -18,6 +18,9 @@ export class AttendanceService {
   save(attendance: Partial<Attendance>): Promise<{ ok: boolean; attendance: Attendance; stats: AttendanceStats; alerts: any[] }> {
     return firstValueFrom(this.api.post('/api/attendance', attendance));
   }
+  update(id: string, patch: Partial<Attendance>): Promise<{ ok: boolean; attendance: Attendance; stats: AttendanceStats }> {
+    return firstValueFrom(this.api.put(`/api/attendance/${id}`, patch));
+  }
   porcentaje(studentId: string): Promise<AttendanceStats> {
     return firstValueFrom(this.api.get<{ ok: boolean; stats: AttendanceStats }>(`/api/attendance/estudiante/${studentId}/porcentaje`).pipe(map((r) => r.stats)));
   }

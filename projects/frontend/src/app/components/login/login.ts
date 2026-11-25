@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
+import { homeRouteFor } from '../../auth/home-route';
 import { ToastService } from '../../shared/toast.service';
 
 @Component({
@@ -12,9 +13,9 @@ import { ToastService } from '../../shared/toast.service';
   template: `
     <div class="container py-5">
       <div class="row justify-content-center">
-        <div class="col-md-5 card shadow-lg">
+        <div class="col-md-5 card w-glass-card shadow-none">
           <div class="card-body p-4">
-            <h2 class="text-center mb-4">EduCoro AI</h2>
+            <h2 class="text-center mb-4 text-primary-custom">EduCoro AI</h2>
             <form (ngSubmit)="doLogin()" novalidate>
               <div class="mb-3">
                 <label class="form-label small text-secondary" for="email">Email o CI <span class="text-danger">*</span></label>
@@ -47,7 +48,7 @@ export class Login {
     try {
       const { user } = await this.auth.login(this.form.email, this.form.password);
       if (user?.role) {
-        await this.router.navigate(['/dash', user.role.toLowerCase()]);
+        await this.router.navigate([homeRouteFor(user.role)]);
       } else {
         this.toast.show('Credenciales invalidas');
       }

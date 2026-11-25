@@ -86,9 +86,9 @@ test('CRUD de students (create/list/get/update/delete)', async () => {
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.body.student.fullName, 'Test Student');
 
-  res = await authed.put(`/api/students/${sid}`).send({ status: 'Retirado' });
+  res = await authed.put(`/api/students/${sid}/status`).send({ status: 'Retirado' });
   assert.strictEqual(res.status, 200);
-  assert.strictEqual(res.body.student.status, 'Retirado');
+  assert.strictEqual(res.body.status, 'Retirado');
 
   res = await authed.delete(`/api/students/${sid}`);
   assert.strictEqual(res.status, 200);
@@ -159,6 +159,11 @@ test('auth: login adaptativo por email y registro de refresh/logout/me', async (
   const logout = await request(app).post('/api/users/logout').set('Authorization', `Bearer ${loginRes.body.accessToken}`);
   assert.strictEqual(logout.status, 200);
   assert.strictEqual(logout.body.ok, true);
+
+  // Volver a loguear para obtener un access token válido tras el logout (tokenVersion incrementado).
+  const relogin = await request(app).post('/api/users/login').send({ email: 'coord@educoro.ai', password: 'educoropass' });
+  assert.strictEqual(relogin.status, 200, JSON.stringify(relogin.body));
+  token = relogin.body.accessToken;
 });
 
 test('sistema: GET /api/system/overview (autenticado, Coordinador)', async () => {
